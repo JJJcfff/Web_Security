@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Five in a Row</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .menu {
+            display: flex;
+            gap: 20px;
+        }
+
+        .game-controls {
+            margin-top: 20px;
+        }
+
+        #gameCanvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+<h1 id = "welcomeMessage" >Welcome to Five in a Row!</h1>
+<div class="menu">
+    <button onclick="startGame('ai')">Play against AI</button>
+    <button onclick="startGame('human')">Play against Human</button>
+</div>
+
+<div class = "game-controls" style="display: none;">
+    <button onclick="returnToMenu()">Return To Menu</button>
+</div>
+
+<h2 id="gameTitle" style="display: none;"></h2>
+<canvas hidden id="gameCanvas" width="450" height="450"></canvas>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
+</body>
+</html>

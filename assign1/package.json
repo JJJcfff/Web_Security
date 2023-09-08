@@ -1,6 +1,8 @@
 {
+  "name": "assign1",
+  "version": "1.0.0",
   "dependencies": {
     "express": "^4.18.2",
-    "ws": "^8.14.0"
+    "socket.io": "^4.7.2"
   }
 }
