@@ -2,13 +2,28 @@ const boardSize = 15;
 const cellSize = 30;
 let board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
 let currentPlayer = null;
+let assignedPlayer = null;
 const socket = io.connect('http://localhost:3000');
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// socket events
+socket.on('assign', (player) => {
+    assignedPlayer = player;
+    if (player === 'player1') {
+        currentPlayer = 'player1';
+    }
+});
+
+socket.on('userDisconnected', () => {
+    alert('player disconnected');
+    returnToMenu();
+});
+
+// canvas functions
 canvas.addEventListener('click', (event) => {
-    const x = Math.floor(event.offsetX / cellSize);
-    const y = Math.floor(event.offsetY / cellSize);
+    const x = Math.round(event.offsetX / cellSize);
+    const y = Math.round(event.offsetY / cellSize);
     handleCellClick(x, y);
 });
 
@@ -30,79 +45,66 @@ function drawPiece(x, y, color) {
     ctx.fill();
 }
 
+function handleCellClick(x, y) {
+    // if (!board[x][y] && currentPlayer === assignedPlayer) {
+    //     board[x][y] = assignedPlayer;
+    //     socket.emit('makeMove', {x, y, player: assignedPlayer});
+    //     renderBoard();
+    // }
+}
 function renderBoard() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBoard();
     for (let i = 0; i < boardSize; i++) {
         for (let j = 0; j < boardSize; j++) {
             if (board[i][j]) {
-                drawPiece(i, j, board[i][j]);
+                drawPiece(i, j, board[i][j] === 'player1' ? 'black' : 'white');
             }
         }
     }
 }
 
-function unHideCanvas() {
-    canvas.style.display = 'block';
-}
 
-function clearBoard() {
+function resetStatus() {
     board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
-    renderBoard();
-}
-
-function handleCellClick(x, y) {
-    if (!board[x][y]) {
-        board[x][y] = currentPlayer;
-        socket.emit('makeMove', { x, y, player: currentPlayer });
-        renderBoard();
-    }
+    currentPlayer = null;
+    assignedPlayer = null;
 }
 
 function returnToMenu() {
+    showMenu();
+    resetStatus();
     socket.emit('leaveGame');
-    document.querySelector('.menu').style.display = 'block';
-    document.getElementById('gameTitle').style.display = 'none';
-    document.querySelector('.game-controls').style.display = 'none';
-    document.getElementById('welcomeMessage').style.display = 'block';
-    canvas.style.display = 'none';
-    clearBoard();
 }
 
 function startGame(mode) {
-    document.querySelector('.menu').style.display = 'none';
-    document.getElementById('welcomeMessage').style.display = 'none';
-    clearBoard();
     const gameTitle = document.getElementById('gameTitle');
     if (mode === 'ai') {
         gameTitle.textContent = 'Playing against AI';
         socket.emit('ai');
     } else {
         gameTitle.textContent = 'Playing against Human. You are ' + assignedColor;
+        socket.emit('human');
     }
-    gameTitle.style.display = 'block';
-    document.querySelector('.game-controls').style.display = 'block';
-    unHideCanvas();
+    showGame();
     renderBoard();
 }
+function showMenu() {
+    document.getElementById('gameTitle').style.display = 'none';
+    document.querySelector('.game-controls').style.display = 'none';
+    canvas.style.display = 'none';
+    document.querySelector('.menu').style.display = 'block';
+    document.getElementById('welcomeMessage').style.display = 'block';
+    document.getElementById('gameStatus').style.display = 'none';
+}
 
-socket.on('moveMade', (data) => {
-    board[data.x][data.y] = data.player;
-    currentPlayer = data.player === 'player1' ? 'player2' : 'player1';
-    renderBoard();
-});
-
-socket.on('assignColor', (color) => {
-    assignedColor = color;
-});
-
-socket.on('error', (message) => {
-    alert(message);
-});
-
-socket.on('userDisconnected', () => {
-    alert('Other player disconnected');
-    returnToMenu();
-});
+function showGame() {
+    document.querySelector('.menu').style.display = 'none';
+    document.getElementById('welcomeMessage').style.display = 'none';
+    document.getElementById('gameTitle').style.display = 'block';
+    document.querySelector('.game-controls').style.display = 'block';
+    canvas.style.display = 'block';
+    document.getElementById('gameStatus').style.display = 'block';
+}
 
 renderBoard();

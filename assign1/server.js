@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
+const {compileETag} = require("express/lib/utils");
 
 const app = express();
 const server = http.createServer(app);
@@ -8,38 +9,30 @@ const io = socketIo(server);
 
 const boardSize = 15;
 let board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
+let currentPlayer = null;
 let player1 = false;
 let player2 = false;
 let isAI = false;
 
-function userDisconnected(player) {
-    console.log(player + ' disconnected');
-    board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
-    io.emit('userDisconnected', player);
-    player1 = false;
-    player2 = false;
-    isAI = false;
-}
 
 io.on('connection', (socket) => {
     if (!player1) {
         player1 = socket;
-        socket.emit('assignColor', 'player1');
+        currentPlayer = 'player1';
+        socket.emit('assign', 'player1');
         console.log('player1 connected');
-    }
-    else if (!player2 && !isAI) {
+    } else if (!player2 && !isAI) {
         player2 = socket;
-        socket.emit('assignColor', 'player2');
+        socket.emit('assign', 'player2');
+        io.emit('player2Connected');
         console.log('player2 connected');
-    }
-    else {
+    } else {
         socket.emit('error', 'Game is full');
     }
 
     socket.on('ai', () => {
         isAI = true;
         player2 = 'ai';
-        socket.emit('assignColor', 'player2');
         console.log('AI connected as player2');
     });
 
@@ -51,24 +44,16 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('leaveGame', () => {
-        userDisconnected();
-    });
 
     socket.on('disconnect', () => {
-        userDisconnected();
-        // if (socket === player1) {
-        //     player1 = false;
-        //     if (player2 === 'ai') {
-        //         player2 = false;
-        //         isAI = false;
-        //     }
-        //     console.log('player1 disconnected');
-        //     console.log('AI disconnected');
-        // } else if (socket === player2) {
-        //     player2 = false;
-        //     console.log('player2 disconnected');
-        // }
+        resetStatus();
+        console.log('users disconnected');
+        io.emit('userDisconnected');
+    });
+
+    socket.on('leaveGame', () => {
+        socket.disconnect();
+        console.log('user left');
     });
 });
 
@@ -78,3 +63,12 @@ app.use(express.static('public'));
 server.listen(3000, () => {
     console.log('server started, listening on port 3000');
 });
+
+
+function resetStatus() {
+    board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
+    currentPlayer = null;
+    player1 = false;
+    player2 = false;
+    isAI = false;
+}

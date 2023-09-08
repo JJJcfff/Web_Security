@@ -30,17 +30,18 @@
     </style>
 </head>
 <body>
-<h1 id = "welcomeMessage" >Welcome to Five in a Row!</h1>
+<h1 id="welcomeMessage">Welcome to Five in a Row!</h1>
 <div class="menu">
     <button onclick="startGame('ai')">Play against AI</button>
     <button onclick="startGame('human')">Play against Human</button>
 </div>
 
-<div class = "game-controls" style="display: none;">
+<div class="game-controls" style="display: none;">
     <button onclick="returnToMenu()">Return To Menu</button>
 </div>
 
 <h2 id="gameTitle" style="display: none;"></h2>
+<h3 id="gameStatus" style="display: none;"></h3>
 <canvas hidden id="gameCanvas" width="450" height="450"></canvas>
 
 <script src="/socket.io/socket.io.js"></script>
