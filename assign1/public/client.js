@@ -1,29 +1,89 @@
 const boardSize = 15;
 const cellSize = 30;
 let board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
-let currentPlayer = null;
-let assignedPlayer = null;
 const socket = io.connect('http://localhost:3000');
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+let currentPlayer = 'player1';
+let assignedPlayer = null;
+let isAI = false;
+
 // socket events
 socket.on('assign', (player) => {
     assignedPlayer = player;
-    if (player === 'player1') {
-        currentPlayer = 'player1';
+    document.getElementById('gameTitle').textContent = 'Playing against Human. You are ' + assignedPlayer;
+});
+socket.on('beginGame', () => {
+    if (assignedPlayer === 'player1') {
+        document.getElementById('gameStatus').textContent = 'Your turn';
+    } else {
+        document.getElementById('gameStatus').textContent = 'Opponent\'s turn';
     }
 });
-
-socket.on('userDisconnected', () => {
-    alert('player disconnected');
+socket.on('moveMade', (data) => {
+    board[data.x][data.y] = data.player;
+    renderBoard();
+    switchPlayer();
+});
+socket.on('error', (message) => {
+    alert(message);
     returnToMenu();
 });
+socket.on('gameOver', (message) => {
+    alert(message);
+});
+
+
+
+
+// game logic
+function handleCellClick(x, y) {
+    if(!board[x][y] && assignedPlayer === currentPlayer) {
+        socket.emit('makeMove', {x, y});
+    }
+}
+
+function checkWin() {
+    for (let i = 0; i < boardSize; i++) {
+        for (let j = 0; j < boardSize - 4; j++) {
+            if (board[i][j] && board[i][j] === board[i][j + 1] && board[i][j] === board[i][j + 2] && board[i][j] === board[i][j + 3] && board[i][j] === board[i][j + 4]) {
+                return board[i][j];
+            }
+        }
+    }
+    return null;
+}
+
+function startGame(mode) {
+    const gameTitle = document.getElementById('gameTitle');
+    if (mode === 'ai') {
+        gameTitle.textContent = 'Playing against AI';
+        isAI = true;
+        socket.emit('ai');
+    } else {
+        isAI = false;
+        socket.emit('human');
+    }
+    showGame();
+    renderBoard();
+}
+
+function switchPlayer() {
+    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
+    if (currentPlayer === assignedPlayer) {
+        document.getElementById('gameStatus').textContent = 'Your turn';
+    } else {
+        document.getElementById('gameStatus').textContent = 'Opponent\'s turn';
+    }
+}
+
 
 // canvas functions
 canvas.addEventListener('click', (event) => {
-    const x = Math.round(event.offsetX / cellSize);
-    const y = Math.round(event.offsetY / cellSize);
+    const x = Math.floor(event.offsetX / cellSize);
+    const y = Math.floor(event.offsetY / cellSize);
+    console.log(x, y);
     handleCellClick(x, y);
 });
 
@@ -42,16 +102,11 @@ function drawPiece(x, y, color) {
     ctx.beginPath();
     ctx.arc((x + 0.5) * cellSize, (y + 0.5) * cellSize, cellSize / 2 - 5, 0, 2 * Math.PI);
     ctx.fillStyle = color;
+    ctx.strokeStyle = '#000';
+    ctx.stroke();
     ctx.fill();
 }
 
-function handleCellClick(x, y) {
-    // if (!board[x][y] && currentPlayer === assignedPlayer) {
-    //     board[x][y] = assignedPlayer;
-    //     socket.emit('makeMove', {x, y, player: assignedPlayer});
-    //     renderBoard();
-    // }
-}
 function renderBoard() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBoard();
@@ -65,30 +120,22 @@ function renderBoard() {
 }
 
 
+
+// UI functions
 function resetStatus() {
     board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
-    currentPlayer = null;
+    currentPlayer = 'player1';
     assignedPlayer = null;
+    isAI = false;
 }
 
 function returnToMenu() {
+    socket.emit('leaveGame');
     showMenu();
     resetStatus();
-    socket.emit('leaveGame');
 }
 
-function startGame(mode) {
-    const gameTitle = document.getElementById('gameTitle');
-    if (mode === 'ai') {
-        gameTitle.textContent = 'Playing against AI';
-        socket.emit('ai');
-    } else {
-        gameTitle.textContent = 'Playing against Human. You are ' + assignedColor;
-        socket.emit('human');
-    }
-    showGame();
-    renderBoard();
-}
+
 function showMenu() {
     document.getElementById('gameTitle').style.display = 'none';
     document.querySelector('.game-controls').style.display = 'none';
@@ -105,6 +152,11 @@ function showGame() {
     document.querySelector('.game-controls').style.display = 'block';
     canvas.style.display = 'block';
     document.getElementById('gameStatus').style.display = 'block';
+    if (isAI) {
+        document.getElementById('gameStatus').textContent = 'Your turn';
+    } else {
+        document.getElementById('gameStatus').textContent = 'Waiting for other player...';
+    }
 }
 
 renderBoard();
