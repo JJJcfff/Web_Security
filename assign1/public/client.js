@@ -1,14 +1,15 @@
 const boardSize = 15;
 const cellSize = 30;
 let board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
-const socket = io.connect('http://localhost:3000');
+const socket = io('http://localhost:3000');
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 let currentPlayer = 'player1';
 let assignedPlayer = null;
 let isAI = false;
-
+let hasMoved = false;
+let isGameOver = false;
 // socket events
 socket.on('assign', (player) => {
     assignedPlayer = player;
@@ -22,7 +23,13 @@ socket.on('beginGame', () => {
     }
 });
 socket.on('moveMade', (data) => {
-    board[data.x][data.y] = data.player;
+    console.log(data);
+    if (assignedPlayer === 'player1') {
+        board[data.x][data.y] = data.player === socket.id ? 'player1' : 'player2';
+    } else {
+        board[data.x][data.y] = data.player === socket.id ? 'player2' : 'player1';
+    }
+    hasMoved = data.player === socket.id;
     renderBoard();
     switchPlayer();
 });
@@ -31,31 +38,28 @@ socket.on('error', (message) => {
     returnToMenu();
 });
 socket.on('gameOver', (message) => {
+    isGameOver = true;
     alert(message);
 });
 
-
-
-
 // game logic
 function handleCellClick(x, y) {
-    if(!board[x][y] && assignedPlayer === currentPlayer) {
-        socket.emit('makeMove', {x, y});
-    }
-}
-
-function checkWin() {
-    for (let i = 0; i < boardSize; i++) {
-        for (let j = 0; j < boardSize - 4; j++) {
-            if (board[i][j] && board[i][j] === board[i][j + 1] && board[i][j] === board[i][j + 2] && board[i][j] === board[i][j + 3] && board[i][j] === board[i][j + 4]) {
-                return board[i][j];
-            }
+    if (!isGameOver) {
+        if (board[x][y]) {
+            alert('Cannot place piece here');
+            return;
+        } else if (assignedPlayer !== currentPlayer) {
+            alert('Not your turn');
+            return;
         }
+        socket.emit('makeMove', {x, y, player: socket.id});
+    } else {
+        alert('Game has ended. Please return to menu');
     }
-    return null;
 }
 
 function startGame(mode) {
+    resetStatus();
     const gameTitle = document.getElementById('gameTitle');
     if (mode === 'ai') {
         gameTitle.textContent = 'Playing against AI';
@@ -127,6 +131,8 @@ function resetStatus() {
     currentPlayer = 'player1';
     assignedPlayer = null;
     isAI = false;
+    hasMoved = false;
+    isGameOver = false;
 }
 
 function returnToMenu() {
