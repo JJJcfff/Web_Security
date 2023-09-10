@@ -126,6 +126,7 @@ function resetStatus() {
 
 function checkConnectStone(x, y, player, numStone = 5) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+    shuffle(directions);
     for (let [dx, dy] of directions) {
         let count = 0;
         for (let step = -4; step <= 4; step++) {
@@ -158,7 +159,7 @@ function checkTie() {
 }
 
 
-//AI PLAYER FUNCTIONS WIP
+//Dumb AI
 function aiPlayer() {
     for (let numStone = 5; numStone >= 1; numStone--) {
         for (let x = 0; x < boardSize; x++) {
@@ -187,6 +188,14 @@ function aiPlayer() {
         y = Math.floor(Math.random() * boardSize);
     }
     return [x, y];
+}
+
+function shuffle(arr) {
+    for (let i = arr.length - 1; i >= 0; i--) {
+        let j = Math.floor(Math.random() * i);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
 
