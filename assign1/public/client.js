@@ -15,12 +15,11 @@ socket.on('assign', (player) => {
     if(!isAI) {
         assignedPlayer = player;
         document.getElementById('gameTitle').textContent = 'Playing against Human. You are ' + assignedPlayer;
-        console.log('assigned player: ' + assignedPlayer);
     } else {
         assignedPlayer = 'player1';
         document.getElementById('gameTitle').textContent = 'Playing against AI';
-        console.log('assigned player: ' + assignedPlayer);
     }
+    console.log('assigned player: ' + assignedPlayer);
 });
 
 socket.on('beginGame', () => {
@@ -48,11 +47,10 @@ socket.on('error', (message) => {
 });
 socket.on('gameOver', (message) => {
     console.log('game over');
-    document.getElementById('gameStatus').textContent = 'Game Over';
+    document.getElementById('gameStatus').textContent = 'Game Over, ' + message + '! Please return to menu!';
     renderBoard();
     isGameOver = true;
     board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
-    alert(message);
 });
 
 // game logic
@@ -183,7 +181,7 @@ function showGame() {
     if (isAI) {
         document.getElementById('gameStatus').textContent = 'Your turn';
     } else {
-        document.getElementById('gameStatus').textContent = 'Waiting for other player...';
+        document.getElementById('gameStatus').textContent = 'Waiting for other player to connect...';
     }
 }
 
