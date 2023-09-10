@@ -76,10 +76,11 @@ function startGame(mode) {
     resetStatus();
     const gameTitle = document.getElementById('gameTitle');
     if (mode === 'ai') {
-        //gameTitle.textContent = 'Playing against AI';
+        gameTitle.textContent = 'Playing against AI';
         isAI = true;
         socket.emit('ai');
     } else {
+        gameTitle.textContent = 'Playing against Another Player'
         isAI = false;
         socket.emit('human');
     }
@@ -99,19 +100,21 @@ function switchPlayer() {
 
 // canvas functions
 canvas.addEventListener('click', (event) => {
-    const x = Math.floor(event.offsetX / cellSize);
-    const y = Math.floor(event.offsetY / cellSize);
-    console.log(x, y);
+    let x = Math.floor(event.offsetX / cellSize);
+    let y = Math.floor(event.offsetY / cellSize);
+    x = Math.min(Math.max(x, 0), boardSize - 1);
+    y = Math.min(Math.max(y, 0), boardSize - 1);
+    console.log('mouse clicked',x, y);
     handleCellClick(x, y);
 });
 
 function drawBoard() {
     ctx.beginPath();
-    for (let i = 0; i <= boardSize; i++) {
-        ctx.moveTo(i * cellSize, 0);
-        ctx.lineTo(i * cellSize, boardSize * cellSize);
-        ctx.moveTo(0, i * cellSize);
-        ctx.lineTo(boardSize * cellSize, i * cellSize);
+    for (let i = 0; i <= boardSize -1; i++) {
+        ctx.moveTo(i * cellSize + cellSize/2, cellSize/2);
+        ctx.lineTo(i * cellSize + cellSize/2, boardSize * cellSize - cellSize/2);
+        ctx.moveTo(cellSize/2, i * cellSize + cellSize/2);
+        ctx.lineTo(boardSize * cellSize - cellSize/2, i * cellSize + cellSize/2);
     }
     //grey lines
     ctx.strokeStyle = '#969696';
@@ -119,7 +122,7 @@ function drawBoard() {
 }
 
 function drawPiece(x, y, color) {
-    console.log(x, y, color);
+    //console.log(x, y, color);
     ctx.beginPath();
     ctx.arc((x + 0.5) * cellSize, (y + 0.5) * cellSize, cellSize / 2 - 5, 0, 2 * Math.PI);
     ctx.fillStyle = color;

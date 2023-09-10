@@ -117,12 +117,6 @@ io.on('connection', (socket) => {
     });
 });
 
-app.use(express.static('public'));
-
-server.listen(3000,() => {
-    console.log('server started, listening on port 3000');
-});
-
 function resetStatus() {
     board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
     currentPlayer = null;
@@ -132,7 +126,7 @@ function resetStatus() {
 }
 
 function checkWin(x, y) {
-    console.log("check win x y", x, y);
+    //console.log("check win x y", x, y);
     const directions = [
         [1, 0], // horizontal
         [0, 1], // vertical
@@ -180,83 +174,22 @@ function checkTie() {
 
 //AI PLAYER FUNCTIONS WIP
 function aiPlayer() {
-    let bestScore = -Infinity;
-    let bestMove;
-
-    for (let i = 0; i < boardSize; i++) {
-        for (let j = 0; j < boardSize; j++) {
-            if (board[i][j] === null) {
-                board[i][j] = AI_PLAYER;
-                let score = minimax(board, 0, false);
-                board[i][j] = null;
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMove = [i, j];
-                }
-            }
-        }
+    //place random piece
+    let x = Math.floor(Math.random() * boardSize);
+    let y = Math.floor(Math.random() * boardSize);
+    while (board[x][y] !== null) {
+        x = Math.floor(Math.random() * boardSize);
+        y = Math.floor(Math.random() * boardSize);
     }
-
-    return bestMove;
+    return [x, y];
 }
 
-function minimax(board, depth, isMaximizing) {
-    if (depth === MAX_DEPTH) {
-        return 0; // Neutral score for non-terminal states at max depth
-    }
 
-    if (checkWinForPlayer(board, HUMAN_PLAYER)) {
-        return -10 + depth; // Favor quicker wins and slower losses
-    }
 
-    if (checkWinForPlayer(board, AI_PLAYER)) {
-        return 10 - depth;
-    }
 
-    if (checkTie()) {
-        return 0;
-    }
+app.use(express.static('public'));
 
-    if (isMaximizing) {
-        let maxEval = -Infinity;
-        for (let i = 0; i < boardSize; i++) {
-            for (let j = 0; j < boardSize; j++) {
-                if (board[i][j] === null) {
-                    board[i][j] = AI_PLAYER;
-                    let eval = minimax(board, depth + 1, false);
-                    board[i][j] = null;
-                    maxEval = Math.max(maxEval, eval);
-                }
-            }
-        }
-        return maxEval;
-    } else {
-        let minEval = Infinity;
-        for (let i = 0; i < boardSize; i++) {
-            for (let j = 0; j < boardSize; j++) {
-                if (board[i][j] === null) {
-                    board[i][j] = HUMAN_PLAYER;
-                    let eval = minimax(board, depth + 1, true);
-                    board[i][j] = null;
-                    minEval = Math.min(minEval, eval);
-                }
-            }
-        }
-        return minEval;
-    }
-}
-
-function checkWinForPlayer(board, player) {
-    for (let i = 0; i < boardSize; i++) {
-        for (let j = 0; j < boardSize; j++) {
-            if (board[i][j] === player) {
-                if (checkWin(i, j)) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
+server.listen(3000,() => {
+    console.log('server started, listening on port 3000');
+});
 
