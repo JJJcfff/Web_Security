@@ -47,6 +47,9 @@ socket.on('error', (message) => {
 });
 socket.on('gameOver', (message) => {
     console.log('game over');
+    if (isAI && message === 'Player1 wins'){
+        message = 'You win';
+    }
     document.getElementById('gameStatus').textContent = 'Game Over, ' + message + '! Please return to menu!';
     renderBoard();
     isGameOver = true;

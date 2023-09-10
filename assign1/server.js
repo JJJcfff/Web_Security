@@ -125,8 +125,8 @@ function resetStatus() {
 }
 
 function checkConnectStone(x, y, player, numStone = 5) {
-    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
-    shuffle(directions);
+    let directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+    directions = shuffle(directions);
     for (let [dx, dy] of directions) {
         let count = 0;
         for (let step = -4; step <= 4; step++) {
