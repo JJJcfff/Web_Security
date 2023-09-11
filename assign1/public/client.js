@@ -2,7 +2,7 @@ const boardSize = 15;
 const cellSize = 30;
 let board = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
 const socket = io('http://localhost:3000');
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('gameBoard');
 const ctx = canvas.getContext('2d');
 
 let currentPlayer = null;
@@ -80,7 +80,7 @@ function startGame(mode) {
         gameTitle.textContent = 'Playing against AI';
         isAI = true;
         socket.emit('ai');
-    } else {
+    } else if (mode === 'human') {
         gameTitle.textContent = 'Playing against Another Player'
         isAI = false;
         socket.emit('human');
