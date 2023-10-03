@@ -8,7 +8,6 @@ def index():
     if not request.args.get("timer"):
         return render_template("index.html")
     else:
-
         return render_template("timer.html", timer=request.args.get("timer"))
 
 

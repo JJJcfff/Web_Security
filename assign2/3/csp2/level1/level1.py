@@ -6,8 +6,12 @@ page_header = """
 <!doctype html>
 <html>
   <head>
+      <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+    ">
     <!-- Internal game scripts/styles, mostly boring stuff -->
     <link rel="stylesheet" href="/static/game-frame-styles.css" />
+    <script src="/static/script.js"></script>
   </head>
 
   <body id="level1">
@@ -42,9 +46,6 @@ def index():
 
         content = page_header + message + page_footer
         response = make_response(render_template_string(content))
-
-    csp_header = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self';"
-    response.headers["Content-Security-Policy"] = csp_header
     return response
 
 

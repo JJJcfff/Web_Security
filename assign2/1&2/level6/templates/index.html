@@ -2,8 +2,10 @@
 <html>
   <head>
     <!-- Internal game scripts/styles, mostly boring stuff -->
-    <script src="/static/game-frame.js"></script>
     <link rel="stylesheet" href="/static/game-frame-styles.css" />
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+    ">
 
     <script>
     function setInnerText(element, value) {
@@ -20,12 +22,6 @@
       if (url.match(/^https?:\/\//)) {
         setInnerText(document.getElementById("log"),
           "Sorry, cannot load a URL containing \"http\".");
-        return;
-      }
-      // add more checks to sanitize the URL from loading external file
-      if (url.match(/\/\//)) {
-        setInnerText(document.getElementById("log"),
-          "Sorry, cannot load a URL containing \"//\".");
         return;
       }
 

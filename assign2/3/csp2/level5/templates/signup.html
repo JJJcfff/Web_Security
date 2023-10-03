@@ -1,8 +1,9 @@
 <!doctype html>
 <html>
   <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';">
+
     <!-- Internal game scripts/styles, mostly boring stuff -->
-    <script src="/static/game-frame.js"></script>
     <link rel="stylesheet" href="/static/game-frame-styles.css" />
   </head>
 
@@ -10,7 +11,6 @@
     <img src="/static/logos/level5.png" /><br><br>
     <!-- We're ignoring the email, but the poor user will never know! -->
     Enter email: <input id="reader-email" name="email" value="">
-
     <br><br>
     <a href="{{ next }}">Next >></a>
   </body>

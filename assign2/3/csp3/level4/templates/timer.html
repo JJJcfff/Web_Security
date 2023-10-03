@@ -1,24 +1,29 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- Internal game scripts/styles, mostly boring stuff -->
-    <link rel="stylesheet" href="/static/game-frame-styles.css" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'nonce-3a743205186cf10852df61f70ee7065d'">
 
-    <script>
+    <!-- Internal game scripts/styles, mostly boring stuff -->
+    <link rel="stylesheet" href="/static/game-frame-styles.css" nonce="3a743205186cf10852df61f70ee7065d"/>
+
+
+    <script nonce="3a743205186cf10852df61f70ee7065d">
       function startTimer(seconds) {
         seconds = parseInt(seconds) || 3;
         setTimeout(function() {
           window.confirm("Time is up!");
           window.history.back();
         }, seconds * 1000);
-
+      }
+      window.onload = function() {
+        startTimer("{{ timer }}");
       }
     </script>
   </head>
   <body id="level4">
     <img src="/static/logos/level4.png" />
     <br>
-    <img src="/static/loading.gif" onload="startTimer(parseInt('{{ timer }}'));" />
+    <img src="/static/loading.gif"/>
     <br>
     <div id="message"></div>
   </body>

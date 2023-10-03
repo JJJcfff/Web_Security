@@ -1,16 +1,15 @@
 <!doctype html>
 <html>
   <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';">
     <!-- Internal game scripts/styles, mostly boring stuff -->
-    <script src="/static/game-frame.js"></script>
     <link rel="stylesheet" href="/static/game-frame-styles.css" />
+    <script src = "/static/script.js"></script>
   </head>
 
   <body id="level5">
     <img src="/static/logos/level5.png" /><br><br>
     Thanks for signing up, you will be redirected soon...
-    <script>
-      setTimeout(function() { window.location = '{{ next }}'; }, 5000);
-    </script>
+
   </body>
 </html>
