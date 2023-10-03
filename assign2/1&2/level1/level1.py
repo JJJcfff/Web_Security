@@ -32,21 +32,15 @@ main_page_markup = """
 
 @app.route('/')
 def index():
-    return render_template_string(page_header + main_page_markup + page_footer)
-
-
-@app.route('/', methods=['GET', 'POST'])
-def search():
-    if request.method == 'POST':
-        query = request.form.get('query', '[empty]')
-
-        # Handle search logic here
-        # You can replace the following message with actual search results
-        message = f"Search results for: <b>{query}</b>"
+    if not request.args.get("query"):
+        return render_template_string(page_header + main_page_markup + page_footer)
     else:
-        message = ""
+        query = request.args.get("query", "[empty]")
 
-    return render_template_string(page_header + message + page_footer)
+        message = "Sorry, no results were found for <b>" + query + "</b>."
+        message += " <a href='?'>Try again</a>."
+
+        return render_template_string(page_header + message + page_footer)
 
 
 if __name__ == "__main__":

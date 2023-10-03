@@ -32,27 +32,18 @@ main_page_markup = """
 
 @app.route('/')
 def index():
-    response = make_response(render_template_string(page_header + main_page_markup + page_footer))
-    # Set CSP headers to make all inline scripts external
-    csp_header = "default-src 'self'; script-src 'self' https://example.com; style-src 'self' https://example.com; img-src 'self' https://example.com;"
-    response.headers["Content-Security-Policy"] = csp_header
-    return response
-
-
-@app.route('/', methods=['GET', 'POST'])
-def search():
-    if request.method == 'POST':
-        query = request.form.get('query', '[empty]')
-
-        # Handle search logic here
-        # You can replace the following message with actual search results
-        message = f"Search results for: <b>{query}</b>"
+    if not request.args.get("query"):
+        response = make_response(render_template_string(page_header + main_page_markup + page_footer))
     else:
-        message = ""
+        query = request.args.get("query", "[empty]")
 
-    response = make_response(render_template_string(page_header + message + page_footer))
-    # Set CSP headers to make all inline scripts external
-    csp_header = "default-src 'self'; script-src 'self' https://example.com; style-src 'self' https://example.com; img-src 'self' https://example.com;"
+        message = "Sorry, no results were found for <b>" + query + "</b>."
+        message += " <a href='?'>Try again</a>."
+
+        content = page_header + message + page_footer
+        response = make_response(render_template_string(content))
+
+    csp_header = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self';"
     response.headers["Content-Security-Policy"] = csp_header
     return response
 

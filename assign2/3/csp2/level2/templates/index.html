@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <!-- Internal game scripts/styles, mostly boring stuff -->
@@ -8,57 +8,7 @@
     <!-- This is our database of messages -->
     <script src="/static/post-store.js"></script>
 
-    <!-- Include DOMPurify -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.1/purify.min.js"></script>
-
-    <script>
-      var defaultMessage = "Welcome!<br><br>This is your <i>personal</i>"
-        + " stream. You can post anything you want here, especially "
-        + "<span style='color: #f00ba7'>madness</span>.";
-
-      var DB = new PostDB(defaultMessage);
-
-      function displayPosts() {
-        var containerEl = document.getElementById("post-container");
-        containerEl.innerHTML = "";
-
-        var posts = DB.getPosts();
-        for (var i=0; i<posts.length; i++) {
-          var html = '<table class="message"> <tr> <td valign=top> '
-            + '<img src="/static/level2_icon.png"> </td> <td valign=top '
-            + ' class="message-container"> <div class="shim"></div>';
-
-          html += '<b>You</b>';
-          html += '<span class="date">' + new Date(posts[i].date) + '</span>';
-
-          var sanitizedMessage = DOMPurify.sanitize(posts[i].message);
-          html += "<blockquote>" + sanitizedMessage + "</blockquote>";
-
-          html += "</td></tr></table>";
-          containerEl.innerHTML += html;
-        }
-      }
-
-      window.onload = function() {
-        document.getElementById('clear-form').onsubmit = function() {
-          DB.clear(function() { displayPosts() });
-          return false;
-        }
-
-        document.getElementById('post-form').onsubmit = function() {
-          var message = document.getElementById('post-content').value;
-
-          // Sanitize user input using DOMPurify
-          var sanitizedMessage = DOMPurify.sanitize(message);
-
-          DB.save(sanitizedMessage, function() { displayPosts() } );
-          document.getElementById('post-content').value = "";
-          return false;
-        }
-
-        displayPosts();
-      }
-    </script>
+    <script> src= "/static/script.js"</script>
   </head>
 
   <body id="level2">
@@ -80,12 +30,14 @@
         <td class="message-container">
           <div class="shim"></div>
           <form action="?" id="post-form">
-            <textarea id="post-content" name="content" rows="2" cols="50"></textarea>
+            <textarea id="post-content" name="content" rows="2"
+              cols="50"></textarea>
             <input class="share" type="submit" value="Share status!">
             <input type="hidden" name="action" value="sign">
           </form>
         </td>
       </tr>
     </table>
+
   </body>
 </html>
