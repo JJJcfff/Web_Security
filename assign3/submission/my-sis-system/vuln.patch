@@ -1,0 +1,8 @@
+--- ./app.js	2023-10-09 20:09:07.237428300 -0400
++++ ./app-patched.js	2023-10-17 00:27:55.412039200 -0400
+@@ -1,4 +1,5 @@
+ var createError = require('http-errors');
++Object.freeze(Object.prototype);
+ var express = require('express');
+ var path = require('path');
+ var cookieParser = require('cookie-parser');

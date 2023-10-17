@@ -9,7 +9,6 @@ var router = express.Router();
 router.post('/', function(req, res, next) {
     try{
       const userData = ion.parse(req.body);
-
       if (userData.user.name == "admin" && userData.user.password == "dksjhf2798y8372ghkjfgsd8tg823gkjbfsig7g2gkfjsh"){
         res.send('Nice Try??')
       } else{

