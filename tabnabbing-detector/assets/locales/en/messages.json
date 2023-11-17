@@ -1,0 +1,11 @@
+{
+    "appName": {
+        "message": "Tabnabbing Detector"
+    },
+    "appShortName": {
+        "message": "Tabnabbing Detector"
+    },
+    "appDescription": {
+        "message": "Detects and alerts users to Tabnabbing attacks."
+    }
+}

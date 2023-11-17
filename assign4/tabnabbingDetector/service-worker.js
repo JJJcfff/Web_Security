@@ -1,4 +1,4 @@
-importScripts('resemble.js');
+import resemblejs from 'https://cdn.jsdelivr.net/npm/resemblejs@5.0.0/+esm'
 
 let lastActiveTabId = null;
 // take screenshot every 15s for current active tab.
@@ -133,7 +133,7 @@ async function compareImage(tabID, imageDataURL, numRows, numCols) {
                 let blockData = [];
                 let isTabModified = false;
                 for (let i = 0; i < numRows * numCols; i++) {
-                   resemble(prevBlocks[i].data).compareTo(currBlocks[i].data).onComplete(function (data) {
+                   resemblejs(prevBlocks[i].data).compareTo(currBlocks[i].data).onComplete(function (data) {
                         blockData.push(data);
                         if (data["rawMisMatchPercentage"] > 0.1) {
                             isTabModified = true;

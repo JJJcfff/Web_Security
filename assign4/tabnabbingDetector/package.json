@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "extension-cli": "^1.2.4",
+    "resemblejs": "^5.0.0"
+  }
+}
