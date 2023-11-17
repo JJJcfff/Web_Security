@@ -1,4 +1,3 @@
-import resemble from './resemble.js';
 
 let lastActiveTabId = null;
 // take screenshot every 15s for current active tab.
@@ -22,7 +21,19 @@ chrome.alarms.onAlarm.addListener(alarm => {
     }
 });
 
+//inject content script for every tab
+chrome.tabs.onCreated.addListener(function(tab) {
+    chrome.scripting.executeScript({
+        target: {tabId: tab.id},
+        files: ['content.js']
+    }).then(r =>{
+        console.log('content script injected for tab'+tab.id + 'time'+ Date.now());
+    });
+});
+
+
 chrome.tabs.onActivated.addListener(activeInfo => {
+    updateIcon(false);
     setTimeout(() => { //wait for 500ms to take screenshot
         console.log('tab activated');
         if (lastActiveTabId !== null && lastActiveTabId !== activeInfo.tabId) {
@@ -37,18 +48,33 @@ chrome.tabs.onActivated.addListener(activeInfo => {
                 //get current screenshot for current tab
                 chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (currImage) {
                     //:TODO: compare two images
-                    resemble(prevImage[activeInfo.tabId]).compareTo(currImage).onComplete(function (data) {
-                        let diff = data.misMatchPercentage;
-                        console.log('diff: ' + diff);
-                        if (diff > 0.1) {
-                            console.log('change detected');
-                            updateIcon(true);
+                    // resemble(prevImage[activeInfo.tabId]).compareTo(currImage).onComplete(function (data) {
+                    //     let diff = data.misMatchPercentage;
+                    //     console.log('diff: ' + diff);
+                    //     if (diff > 0.1) {
+                    //         console.log('change detected');
+                    //         updateIcon(true);
+                    //     }
+                    //     else {
+                    //         console.log('no change');
+                    //         updateIcon(false);
+                    //     }
+                    // });
+                    console.log('compare image for tab'+activeInfo.tabId + 'time'+ Date.now());
+                    let imageCompResult = {};
+                    imageCompResult["nRows"] = 16;
+                    imageCompResult["nCols"] = 16;
+                    let blockData = [];
+                    for (let i = 0; i < 16*16; i++) {
+                        if (Math.random() < 0.3) {
+                            blockData.push(1);
                         }
                         else {
-                            console.log('no change');
-                            updateIcon(false);
+                            blockData.push(0);
                         }
-                    });
+                    }
+                    imageCompResult["data"] = blockData;
+                    tabModified(activeInfo.tabId, imageCompResult);
                 });
             });
         } else if (lastActiveTabId === null) {
@@ -59,83 +85,6 @@ chrome.tabs.onActivated.addListener(activeInfo => {
 });
 
 
-
-// let currentWindowId = null;
-// let currentTabId = null;
-// let previousTabId = null;
-// // take screenshot for a tab that has just been unfocused.
-// chrome.tabs.onActivated.addListener(activeInfo => {
-//     console.log('tab activated');
-//     currentTabId = activeInfo.tabId;
-//     currentWindowId = activeInfo.windowId;
-// });
-// chrome.windows.onFocusChanged.addListener(windowId => {
-//     console.log('window focus changed');
-//     currentWindowId = windowId;
-//     if (windowId === chrome.windows.WINDOW_ID_NONE) {
-//         // All Chrome windows have lost focus
-//         handleUnfocusedTab();
-//     } else {
-//         // Check if the active tab in the current window is our tab of interest
-//         chrome.tabs.query({active: true, windowId: windowId}, tabs => {
-//             if (tabs.length > 0 && tabs[0].id !== currentTabId) {
-//                 previousTabId = tabs[0].id;
-//                 handleUnfocusedTab();
-//             }
-//         });
-//     }
-// });
-//
-// function handleUnfocusedTab() {
-//     if (currentTabId !== null && currentWindowId !== null) {
-//         screenshotTab(previousTabId);
-//     }
-// }
-//
-// chrome.tabs.onActivated.addListener(activeInfo => {
-//     // take a screenshot for the tab that has just been activated and compare with previous.
-//     let tabID = activeInfo.tabId;
-//     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (image) {
-//         // compareImage(tabID, image, 16, 16).then(comparisonResults => {
-//         //     console.log(comparisonResults);
-//         //     for (let i = 0; i < comparisonResults.length; i++) {
-//         //         if (comparisonResults[i] === 1) {
-//         //             console.log('change detected');
-//         //             updateIcon(true);
-//         //             break;
-//         //         }
-//         //     }
-//         //     chrome.runtime.sendMessage({action: "displayOverlay", data: comparisonResults});
-//         // });
-//
-//         //TODO: test for now, remove later
-//         let comparisonResults = [];
-//         for (let i = 0; i < 16*16; i++) {
-//             if (i === 3) {
-//                 comparisonResults.push(1);
-//             }
-//             else {
-//                 comparisonResults.push(0);
-//             }
-//         }
-//         chrome.scripting.executeScript({
-//             target: {tabId: tabID},
-//             files: ['content.js']
-//         }, (injectionResults) => {
-//             console.log('injectionResults');
-//             console.log(injectionResults);
-//             chrome.runtime.sendMessage({action: "displayOverlay", data: comparisonResults}).then(
-//                 r => {
-//                     console.log('displayOverlay sent');
-//                 }
-//             ).catch(e => {
-//                 console.log(e);
-//             });
-//             updateIcon(true);
-//         });
-//     });
-// });
-
 chrome.tabs.onRemoved.addListener(tabId => {
     //delete screenshot for tabId
     console.log('remove image for tab'+tabId + 'time'+ Date.now());
@@ -143,6 +92,24 @@ chrome.tabs.onRemoved.addListener(tabId => {
         console.log('remove image for tab'+tabId + 'time'+ Date.now());
     });
 });
+
+//clear all images when browser is closed
+chrome.windows.onRemoved.addListener(windowId => {
+    chrome.storage.local.clear(function (){
+        console.log('clear all images');
+    });
+});
+
+function tabModified(tabId, imageCompResult) {
+    chrome.tabs.sendMessage(tabId, {action: "displayOverlay", data: imageCompResult}).then(r => {
+        console.log('send message to content script');
+        updateIcon(true);
+    }).catch(e => {
+        console.log(e);
+        console.log('error sending message to content script');
+    });
+
+}
 
 function updateIcon(alertFound){
     console.log('update icon');
@@ -165,8 +132,6 @@ function saveImage(tabID, imageDataURL) {
     });
 }
 
-//segment image into 16*16 blocks and compare each block with previous image, return an array of ints as blocks, 0 for no change, 1 for change.
-//use resemble.js
 function compareImage(tabID, imageDataURL, numRows, numCols) {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get(tabID.toString(), function (storageResult) {
