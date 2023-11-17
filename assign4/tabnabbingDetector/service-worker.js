@@ -1,5 +1,5 @@
-const resemble = require('resemblejs');
-chrome.alarms.create('screenshot', {periodInMinutes: 1}).then(r => console.log(r));
+import resemble from '/module/resemblejs';
+chrome.alarms.create('screenshot', {periodInMinutes: 1});
 // take screenshot every minute for active tab.
 chrome.alarms.onAlarm.addListener(alarm => {
     if (alarm.name === 'screenshot') {
@@ -44,10 +44,16 @@ chrome.tabs.onActivated.addListener(activeInfo => {
     // take a screenshot for the tab that has just been activated and compare with previous.
     let tabID = activeInfo.tabId;
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (image) {
-    compareImage(tabID, image, 16, 16).then(comparisonResults => {
-        console.log(comparisonResults);
-        chrome.runtime.sendMessage({action: "updateAlert", message: comparisonResults}, function (response) {
-            console.log(response);
+        compareImage(tabID, image, 16, 16).then(comparisonResults => {
+            console.log(comparisonResults);
+            for (let i = 0; i < comparisonResults.length; i++) {
+                if (comparisonResults[i] === 1) {
+                    console.log('change detected');
+                    updateIcon(true);
+                    break;
+                }
+            }
+            chrome.runtime.sendMessage({action: "displayOverlay", data: comparisonResults});
         });
     });
 });
@@ -59,6 +65,9 @@ chrome.tabs.onRemoved.addListener(tabId => {
     });
 });
 
+function updateIcon(alertFound){
+    chrome.browserAction.setIcon({path: alertFound ? 'icon-alert.png' : 'icon-normal.png'});
+}
 
 function screenshotTab(tabID) {
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (image) {
@@ -122,6 +131,7 @@ function splitImage(image, numRows, numCols) {
     let blockWidth = Math.floor(width / numCols);
     let blockHeight = Math.floor(height / numRows);
     let blocks = [];
+    ctx.drawImage(image, 0, 0);
     for (let i = 0; i < numRows; i++) {
         for (let j = 0; j < numCols; j++){
             let block = ctx.getImageData(j * blockWidth, i * blockHeight, blockWidth, blockHeight);

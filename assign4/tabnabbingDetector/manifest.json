@@ -8,6 +8,7 @@
         "service_worker": "service-worker.js"
     },
     "action": {
+        "default_icon": "icon-normal.png",
         "default_popup": "popup.html"
     },
     "content_scripts": [{
