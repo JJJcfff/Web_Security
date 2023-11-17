@@ -27,7 +27,7 @@
         "test:watch": "jest --watch nodejs-tests",
         "test:debug": "node --inspect node_modules/jest/bin/jest --watch --runInBand nodejs-tests",
         "lint": "eslint **/*.js --fix",
-        "lint-ci": "eslint -c ./.eslintrc --ignore-path ./.eslintignore **/*.js"
+        "lint-ci": "eslint -c .eslintrc --ignore-path ./.eslintignore **/*.js"
     },
     "husky": {
         "hooks": {
