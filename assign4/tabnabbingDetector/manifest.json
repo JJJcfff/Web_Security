@@ -3,17 +3,22 @@
     "name": "Tabnabbing Detector",
     "description": "Detects and alerts users to Tabnabbing attacks. Tabnabbing is a form of phishing where malicious websites exploit the lack of focus of their website to completely change their look and feel to imitate the log-in page of a benign site.",
     "version": "1.0",
-    "permissions": ["activeTab", "storage", "tabs", "alarms","scripting"],
-    "host_permissions": ["*://*/*"],
+    "permissions": ["storage", "tabs", "alarms","scripting", "activeTab"],
+    "host_permissions": ["<all_urls>"],
     "background": {
-        "service_worker": "service-worker.js"
+        "service_worker": "service-worker.js",
+        "type": "module"
     },
+    "web_accessible_resources": [{
+            "resources": ["*.js"],
+            "matches": ["<all_urls>"]
+    }],
     "action": {
         "default_icon": "icon-normal.png",
         "default_popup": "popup.html"
     },
     "content_scripts": [{
-        "matches": ["http://*/*", "https://*/*"],
-        "js": ["content.js"]
+        "matches": ["<all_urls>"],
+        "js": ["resemble.js","content.js"]
     }]
 }

@@ -1,64 +1,62 @@
-let currentTabId = null;
-let currentWindowId = null;
+import resemble from './resemble.js';
+
 let lastActiveTabId = null;
 // take screenshot every 15s for current active tab.
 chrome.alarms.create('screenshot', {
         when: Date.now(),
-        periodInMinutes: 1/4
+        periodInMinutes: 1/12
     }).then(r => {
         console.log('alarm created');
 });
 chrome.alarms.onAlarm.addListener(alarm => {
     if (alarm.name === 'screenshot') {
         console.log('alarm received, take screenshot');
-        chrome.tabs.getCurrent().then(tab => {
-            screenshotTab(tab.id);
-            console.log('alarm triggered take screenshot for tab'+tab.id + 'time: '+ Date.now());
-        }).catch(e => {
-            console.log(e);
-        });
+        chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+            if (tabs.length === 0) {
+                console.log('no active tab');
+                return;
+            }
+            screenshotTab(tabs[0].id);
+            console.log('alarm triggered take screenshot for tab'+ tabs[0].id + 'time: '+ Date.now());
+        })
     }
 });
 
 chrome.tabs.onActivated.addListener(activeInfo => {
-    console.log('tab activated');
-    if (lastActiveTabId !== null && lastActiveTabId !== activeInfo.tabId) {
-        console.log(`Tab ${lastActiveTabId} lost focus`);
-        screenshotTab(lastActiveTabId);
-        //get previous screenshot for current tab
-        chrome.storage.local.get(activeInfo.tabId.toString(), function (prevImage) {
-            if (prevImage === undefined) {
-                console.log('previous image not found');
-                return;
-            }
-            //get current screenshot for current tab
-            chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (currImage) {
-                //:TODO: compare two images
-                resemble(prevImage[activeInfo.tabId]).compareTo(currImage).onComplete(function (data) {
-                    let diff = data.misMatchPercentage;
-                    console.log('diff: ' + diff);
-                    if (diff > 0.1) {
-                        console.log('change detected');
-                        updateIcon(true);
-                    }
-                    else {
-                        console.log('no change');
-                        updateIcon(false);
-                    }
+    setTimeout(() => { //wait for 500ms to take screenshot
+        console.log('tab activated');
+        if (lastActiveTabId !== null && lastActiveTabId !== activeInfo.tabId) {
+            console.log(`Tab ${lastActiveTabId} lost focus`);
+            screenshotTab(lastActiveTabId);
+            //get previous screenshot for current tab
+            chrome.storage.local.get(activeInfo.tabId.toString(), function (prevImage) {
+                if (prevImage === undefined) {
+                    console.log('previous image not found');
+                    return;
+                }
+                //get current screenshot for current tab
+                chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (currImage) {
+                    //:TODO: compare two images
+                    resemble(prevImage[activeInfo.tabId]).compareTo(currImage).onComplete(function (data) {
+                        let diff = data.misMatchPercentage;
+                        console.log('diff: ' + diff);
+                        if (diff > 0.1) {
+                            console.log('change detected');
+                            updateIcon(true);
+                        }
+                        else {
+                            console.log('no change');
+                            updateIcon(false);
+                        }
+                    });
                 });
             });
-        });
-    } else if (lastActiveTabId === null) {
-        console.log(`Tab ${activeInfo.tabId} is the first tab`);
-    }
-    lastActiveTabId = activeInfo.tabId;
+        } else if (lastActiveTabId === null) {
+            console.log(`Tab ${activeInfo.tabId} is the first tab`);
+        }
+        lastActiveTabId = activeInfo.tabId;
+    }, 500);
 });
-
-
-
-
-
-
 
 
 
