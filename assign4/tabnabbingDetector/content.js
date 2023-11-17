@@ -4,8 +4,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         const overlay = createOverlay();
         displayDifferences(overlay, request.data);
     }
-    if (request.action === "toggleOverlay") {
+    else if (request.action === "toggleOverlay") {
         toggleOverlay();
+    }
+    else if (request.action === "clearOverlay") {
+        clearOverlay();
     }
 });
 
@@ -22,7 +25,7 @@ function createOverlay() {
     overlay.style.display = 'flex';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
 
     document.body.appendChild(overlay);
     return overlay;
@@ -43,7 +46,7 @@ function displayDifferences(overlay, data) {
             diffElement.style.width = `${100/nCols}%`;
             diffElement.style.height = `${100/nRows}%`;
             diffElement.style.backgroundColor = 'red';
-            diffElement.style.opacity = '0.3';
+            diffElement.style.opacity = '0.4';
             overlay.appendChild(diffElement);
         }
     }

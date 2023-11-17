@@ -1,3 +1,4 @@
+importScripts('resemble.js');
 
 let lastActiveTabId = null;
 // take screenshot every 15s for current active tab.
@@ -34,6 +35,12 @@ chrome.tabs.onCreated.addListener(function(tab) {
 
 chrome.tabs.onActivated.addListener(activeInfo => {
     updateIcon(false);
+    chrome.tabs.sendMessage(activeInfo.tabId, {action: "clearOverlay"}).then(r => {
+        console.log('send message to content script to clear overlay');
+    }).catch(e => {
+        console.log(e);
+        console.log('error sending message to content script');
+    });
     setTimeout(() => { //wait for 500ms to take screenshot
         console.log('tab activated');
         if (lastActiveTabId !== null && lastActiveTabId !== activeInfo.tabId) {
@@ -47,34 +54,10 @@ chrome.tabs.onActivated.addListener(activeInfo => {
                 }
                 //get current screenshot for current tab
                 chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (currImage) {
-                    //:TODO: compare two images
-                    // resemble(prevImage[activeInfo.tabId]).compareTo(currImage).onComplete(function (data) {
-                    //     let diff = data.misMatchPercentage;
-                    //     console.log('diff: ' + diff);
-                    //     if (diff > 0.1) {
-                    //         console.log('change detected');
-                    //         updateIcon(true);
-                    //     }
-                    //     else {
-                    //         console.log('no change');
-                    //         updateIcon(false);
-                    //     }
-                    // });
                     console.log('compare image for tab'+activeInfo.tabId + 'time'+ Date.now());
-                    let imageCompResult = {};
-                    imageCompResult["nRows"] = 16;
-                    imageCompResult["nCols"] = 16;
-                    let blockData = [];
-                    for (let i = 0; i < 16*16; i++) {
-                        if (Math.random() < 0.3) {
-                            blockData.push(1);
-                        }
-                        else {
-                            blockData.push(0);
-                        }
-                    }
-                    imageCompResult["data"] = blockData;
-                    tabModified(activeInfo.tabId, imageCompResult);
+                    compareImage(activeInfo.tabId, currImage, 16, 16).then(r => {
+                        console.log('compare image complete');
+                    });
                 });
             });
         } else if (lastActiveTabId === null) {
@@ -132,53 +115,62 @@ function saveImage(tabID, imageDataURL) {
     });
 }
 
-function compareImage(tabID, imageDataURL, numRows, numCols) {
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.get(tabID.toString(), function (storageResult) {
-            let prevImage = new Image();
-            let currImage = new Image();
-
-            prevImage.src = storageResult[tabID];
-            currImage.src = imageDataURL;
-
-            prevImage.onload = () => {
-                currImage.onload = () => {
-                    let prevBlocks = splitImage(prevImage, numRows, numCols);
-                    let currBlocks = splitImage(currImage, numRows, numCols);
-                    let comparisonPromises = [];
-
-                    for (let i = 0; i < prevBlocks.length; i++) {
-                        let promise = new Promise((res, rej) => {
-                            resemble(prevBlocks[i]).compareTo(currBlocks[i]).onComplete(function (data) {
-                                let diff = data.misMatchPercentage;
-                                res(diff > 0.1 ? 1 : 0);
-                            });
-                        });
-
-                        comparisonPromises.push(promise);
-                    }
-
-                    Promise.all(comparisonPromises).then(comparisonResults => {
-                        resolve(comparisonResults);
-                    }).catch(reject);
-                };
-            };
-            currImage.onerror = reject;
-            prevImage.onerror = reject;
+async function compareImage(tabID, imageDataURL, numRows, numCols) {
+    chrome.storage.local.get(tabID.toString(), async function (storageResult) {
+        let prevImage = storageResult[tabID];
+        let currImage = imageDataURL;
+        if (prevImage === undefined || currImage === undefined) {
+            console.log('one of the image not found');
+            return;
+        }
+        console.log('compare image for tab'+tabID + 'time'+ Date.now());
+        await splitImage(prevImage, numRows, numCols).then(async prevBlocks => {
+            await splitImage(currImage, numRows, numCols).then(currBlocks => {
+                console.log("image split complete");
+                let imageCompResult = {};
+                imageCompResult["nRows"] = numRows;
+                imageCompResult["nCols"] = numCols;
+                let blockData = [];
+                let isTabModified = false;
+                for (let i = 0; i < numRows * numCols; i++) {
+                   resemble(prevBlocks[i].data).compareTo(currBlocks[i].data).onComplete(function (data) {
+                        blockData.push(data);
+                        if (data["rawMisMatchPercentage"] > 0.1) {
+                            isTabModified = true;
+                        }
+                   });
+                }
+                imageCompResult["data"] = blockData;
+                console.log("compare image: ", imageCompResult);
+                if (isTabModified) {
+                    console.log('change detected, now go to tabModified');
+                    tabModified(tabID, imageCompResult);
+                }
+            });
         });
     });
 }
 
 
-function splitImage(image, numRows, numCols) {
-    let canvas = document.createElement('canvas');
-    let ctx = canvas.getContext('2d');
+async function splitImage(imageDataURL, numRows, numCols) {
+    const blob = await fetch(imageDataURL).then(r => r.blob());
+    const image = await createImageBitmap(blob);
+
+    const canvas = new OffscreenCanvas(image.width, image.height);
+    const ctx = canvas.getContext('2d', {willReadFrequently: true});
+//set willReadFrequently to true to improve performance
+
+
     let width = image.width;
     let height = image.height;
+
     let blockWidth = Math.floor(width / numCols);
     let blockHeight = Math.floor(height / numRows);
+
     let blocks = [];
+
     ctx.drawImage(image, 0, 0);
+
     for (let i = 0; i < numRows; i++) {
         for (let j = 0; j < numCols; j++){
             let block = ctx.getImageData(j * blockWidth, i * blockHeight, blockWidth, blockHeight);
